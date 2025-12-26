@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "937543313818",
+    "project_id": "popnfry-5ccce",
+    "storage_bucket": "popnfry-5ccce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937543313818:android:846ee1de286c07e965b223",
+        "android_client_info": {
+          "package_name": "com.example.possystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtKLuM92QupY6I2OoVLVYj8aaxBuBZAik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
