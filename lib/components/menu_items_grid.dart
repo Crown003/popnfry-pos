@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-
 import '../models/menu_item.dart';
 import 'menu_item_card.dart';
 
 class MenuItemsGrid extends StatelessWidget {
   final List<MenuItem> items;
   final List<MenuItem> selectedItems;
+  // final String orderContext;
   final Function(MenuItem) onItemToggled;
 
   const MenuItemsGrid({
     super.key,
     required this.items,
+    // required this.orderContext,
     required this.selectedItems,
     required this.onItemToggled,
   });
@@ -29,7 +30,6 @@ class MenuItemsGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         final isSelected = selectedItems.contains(item);
-
         return MenuItemCard(
           item: item,
           isSelected: isSelected,

@@ -9,11 +9,9 @@ class VegNonVegToggle extends StatefulWidget {
     this.initialValue = true,
     required this.onChanged,
   });
-
   @override
   State<VegNonVegToggle> createState() => _VegNonVegToggleState();
 }
-
 class _VegNonVegToggleState extends State<VegNonVegToggle> {
   late bool isVeg;
 
