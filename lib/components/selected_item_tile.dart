@@ -20,11 +20,10 @@ class SelectedItemTile extends StatelessWidget {
     return Card(
       borderOnForeground: true,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 4.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Image
             Image.asset(
               height: 50,
               width: 50,
@@ -37,80 +36,86 @@ class SelectedItemTile extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(width: 12),
 
-            // Item details - Flexible to prevent overflow
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    item.name,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
                     ),
                   ),
+
                   Text(
                     "₹${item.price.toInt()}",
                     style: const TextStyle(
+                      color: Colors.green,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                      fontSize: 12,
                     ),
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.remove, size: 16),
+                          onPressed: () => onQuantityChanged(quantity - 1),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 30,
+                        child: Text(
+                          "$quantity",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(
+                            Icons.add,
+                            size: 16,
+                            color: Colors.green,
+                          ),
+                          onPressed: () => onQuantityChanged(quantity + 1),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-
-            // Quantity and remove controls
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.remove, size: 16),
-                    onPressed: () => onQuantityChanged(quantity - 1),
-                  ),
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: IconButton(
+                alignment: Alignment.centerLeft,
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.close,
+                  size: 14,
+                  color: Colors.red,
                 ),
-                SizedBox(
-                  width: 30,
-                  child: Text(
-                    "$quantity",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.add, size: 16, color: Colors.green),
-                    onPressed: () => onQuantityChanged(quantity + 1),
-                  ),
-                ),
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.close, size: 14, color: Colors.red),
-                    onPressed: onRemove,
-                  ),
-                ),
-              ],
+                onPressed: onRemove,
+              ),
             ),
           ],
         ),

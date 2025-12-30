@@ -5,13 +5,11 @@ import 'menu_item_card.dart';
 class MenuItemsGrid extends StatelessWidget {
   final List<MenuItem> items;
   final List<MenuItem> selectedItems;
-  // final String orderContext;
   final Function(MenuItem) onItemToggled;
 
   const MenuItemsGrid({
     super.key,
     required this.items,
-    // required this.orderContext,
     required this.selectedItems,
     required this.onItemToggled,
   });
@@ -21,10 +19,10 @@ class MenuItemsGrid extends StatelessWidget {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, // Adjust for your screen (or use SliverGridDelegateWithMaxCrossAxisExtent)
-        childAspectRatio: 0.8, // This is KEY — controls height vs width
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        crossAxisCount: 3,
+        childAspectRatio: 0.8,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {

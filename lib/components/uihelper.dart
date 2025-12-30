@@ -19,20 +19,23 @@ class Helper {
     );
   }
 
-  static CustomButton(VoidCallback voidCallback, String text) {
+  static CustomButton(VoidCallback? voidCallback, String text) {
     return SizedBox(
       height: 50,
       width: 300,
       child: ElevatedButton(
-        onPressed: () {
-          voidCallback();
-        },
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-        child: Text(text, style: TextStyle(color: Colors.white, fontSize: 20)),
+        onPressed: voidCallback, // Disable button if voidCallback is null (loading state)
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.redAccent,
+          disabledBackgroundColor: Colors.grey[400], // Lighter color when disabled
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.white, fontSize: 20),
+        ),
       ),
     );
   }
-
   static showAlert({required BuildContext context, required String title}) {
     return showDialog(
       context: context,
@@ -61,6 +64,7 @@ class Helper {
     required VoidCallback onDeselect,
     required String text,
     required bool isSelected,
+    required String tableTotal,
   }) {
     return InkWell(
       onTap: () {
@@ -86,23 +90,37 @@ class Helper {
           boxShadow: isSelected
               ? [
             BoxShadow(
-              color: Colors.green.withOpacity(0.3),
-              blurRadius: 8,
+              color: Colors.green.shade50,
+              blurRadius: 4,
               offset: const Offset(0, 4),
             ),
-          ]
-              : [],
+          ] : [],
         ),
         child: Center(
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-              color: isSelected ? Colors.green : Colors.black87,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                  color: isSelected ? Colors.green : Colors.black87,
+                ),
+              ),Text(
+                tableTotal,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 10,
+                  color: isSelected ? Colors.green : Colors.black87,
+                ),
+              ),
+
+            ],
           ),
+
         ),
       ),
     );

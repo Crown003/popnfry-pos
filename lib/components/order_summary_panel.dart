@@ -1,54 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Make sure to import provider
 import '../models/menu_item.dart';
+import '../providers/order_provider.dart'; // Import your provider file
 import 'selected_item_tile.dart';
 
-class OrderSummaryPanel extends StatefulWidget {
-  final List<MenuItem> selectedItems;
+class OrderSummaryPanel extends StatelessWidget {
   final String orderContext;
-  final ValueChanged<MenuItem> onRemoveItem;
   final VoidCallback onPaymentComplete;
+
   const OrderSummaryPanel({
     super.key,
-    required this.selectedItems,
-    required this.onRemoveItem,
     required this.orderContext,
     required this.onPaymentComplete,
   });
 
   @override
-  State<OrderSummaryPanel> createState() => _OrderSummaryPanelState();
-}
-class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
-  final Map<MenuItem, int> _quantities = {};
-
-  @override
-  void didUpdateWidget(covariant OrderSummaryPanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    for (var item in widget.selectedItems){
-      _quantities.putIfAbsent(item, () => 1);
-    }
-    //clean up removed items
-    _quantities.removeWhere((key, value) => !widget.selectedItems.contains(key));
-  }
-
-  int getQuantity(MenuItem item) => _quantities[item] ?? 1;
-
-  void updateQuantity(MenuItem item, int newQuantity){
-    if(newQuantity <= 0){
-      widget.onRemoveItem(item);
-      return;
-    }
-    setState(() {
-      _quantities[item] = newQuantity;
-    });
-  }
-    //to calculate the total amount
-  double get total{
-    return widget.selectedItems.fold<double>(0.0, (sum, item) => sum + (item.price * getQuantity(item)));
-  }
-
-    @override
   Widget build(BuildContext context) {
+    // Access the provider
+    final orderProvider = context.watch<OrderProvider>();
+    final selectedItems = orderProvider.selectedItems;
+    final tables = []; // If you have a tables list globally, pass it here or get it from provider
 
     return Container(
       color: Colors.grey[50],
@@ -57,20 +28,22 @@ class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "SELECTED (${widget.selectedItems.length} for ${widget.orderContext})",
+            "SELECTED (${selectedItems.length} for $orderContext)",
             style: Theme.of(context).textTheme.headlineLarge,
           ),
           const SizedBox(height: 12),
           Expanded(
             child: ListView.builder(
-              itemCount: widget.selectedItems.length,
+              itemCount: selectedItems.length,
               itemBuilder: (context, index) {
-                final item = widget.selectedItems[index];
+                final item = selectedItems[index];
                 return SelectedItemTile(
                   item: item,
-                  quantity: getQuantity(item),
-                  onRemove: () => widget.onRemoveItem(item),
-                  onQuantityChanged: (newQty) => updateQuantity(item, newQty),
+                  // Use the new provider methods
+                  quantity: orderProvider.getItemQuantity(item),
+                  onRemove: () => orderProvider.removeItem(item, []), // Pass tables list if needed
+                  onQuantityChanged: (newQty) =>
+                      orderProvider.updateItemQuantity(item, newQty, []),
                 );
               },
             ),
@@ -84,7 +57,7 @@ class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
-                "₹${total.toInt()}",
+                "₹${orderProvider.totalOrderAmount.toInt()}", // Using provider getter
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -102,26 +75,22 @@ class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
                 backgroundColor: Colors.deepOrange,
                 foregroundColor: Colors.white,
               ),
-              onPressed: widget.selectedItems.isEmpty
+              onPressed: selectedItems.isEmpty
                   ? null
                   : () {
-
+                // Professional Logging using Provider data
                 print("===========PopNFry=============");
-                      print("${widget.orderContext}");
-                      print("=== Selected Items ===");
-                      for (var item in widget.selectedItems) {
-                        print("${item.name} - ₹${item.price.toInt()}");
-                      }
-                      print("Total items: ${widget.selectedItems.length}");
-                      // Optional: calculate and print total price
-                      double total = widget.selectedItems.fold(
-                        0,
-                        (sum, item) => sum + item.price,
-                      );
-                      print("Total Price: ₹${total.toInt()}");
-                      print("======================");
-                      widget.onPaymentComplete();
-                    },
+                print("Context: $orderContext");
+                print("=== Selected Items ===");
+                for (var item in selectedItems) {
+                  int qty = orderProvider.getItemQuantity(item);
+                  print("${item.name} x $qty - ₹${(item.price * qty).toInt()}");
+                }
+                print("Total Price: ₹${orderProvider.totalOrderAmount.toInt()}");
+                print("======================");
+
+                onPaymentComplete();
+              },
               child: const Text(
                 "PROCEED TO PAY",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
