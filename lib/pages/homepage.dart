@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:possystem/components/uihelper.dart';
 import 'package:possystem/models/order.dart';
+import 'package:possystem/pages/inventorypage.dart';
 import 'package:provider/provider.dart';
 import '../components/category_selector.dart';
 import '../components/filter_and_search_row.dart';
@@ -147,6 +148,20 @@ class _MyHomePageState extends State<MyHomePage> {
           leading: Image.asset("assets/images/logo.png"),
           title: const Text(""),
           actions: [
+            IconButton(
+              onPressed: (){
+                // await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InventoryPage()),
+                  );
+                }
+              },
+              icon: const Icon(Icons.view_list_outlined),
+              tooltip: "inventory",
+            ),
+            const SizedBox(width: 8),
             IconButton(
               onPressed: () async {
                 await FirebaseAuth.instance.signOut();
@@ -297,6 +312,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   orderContext: orderProvider.selectedTable > 0
                       ? "Table ${orderProvider.selectedTable}"
                       : "Counter Order",
+                  tables: tables,
                   onPaymentComplete: () {
                     orderProvider.clearOrder(tables);
                   },

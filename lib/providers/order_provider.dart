@@ -1,3 +1,4 @@
+// File: lib/providers/order_provider.dart
 import 'package:flutter/material.dart';
 import '../models/order.dart';
 import '../models/menu_item.dart';
@@ -31,6 +32,26 @@ class OrderProvider extends ChangeNotifier {
       removeItem(item, tables);
     } else {
       _itemQuantities[item] = newQuantity;
+
+      // ✅ UPDATE the orders map with new quantities
+      if (selectedTable > 0) {
+        final tableData = tables.firstWhere((t) => t.number == selectedTable);
+        orders[selectedTable] = Order(
+          type: OrderType.table,
+          items: List.from(selectedItems),
+          isVeg: showVegOnly,
+          table: tableData,
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
+        );
+      } else if (selectedTable == 0) {
+        orders[0] = Order(
+          type: OrderType.counter,
+          items: List.from(selectedItems),
+          isVeg: showVegOnly,
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
+        );
+      }
+
       notifyListeners();
     }
   }
@@ -55,6 +76,7 @@ class OrderProvider extends ChangeNotifier {
           items: List.from(selectedItems),
           isVeg: showVegOnly,
           table: tableData,
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
         tableData.status = Status.occupied;
       } else {
@@ -68,6 +90,7 @@ class OrderProvider extends ChangeNotifier {
           type: OrderType.counter,
           isVeg: showVegOnly,
           items: List.from(selectedItems),
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
       } else {
         orders.remove(0);
@@ -85,8 +108,14 @@ class OrderProvider extends ChangeNotifier {
 
       // Rebuild quantities map from loaded items
       _itemQuantities.clear();
-      for (var item in selectedItems) {
-        _itemQuantities[item] = 1;
+      if (order.quantities != null) {
+        // ✅ Restore quantities from saved order
+        _itemQuantities.addAll(order.quantities!);
+      } else {
+        // Fallback for old orders without quantities
+        for (var item in selectedItems) {
+          _itemQuantities[item] = 1;
+        }
       }
 
       if (selectedTable > 0 && selectedItems.isNotEmpty) {
@@ -113,6 +142,7 @@ class OrderProvider extends ChangeNotifier {
           isVeg: showVegOnly,
           items: List.from(selectedItems),
           table: tableData,
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
         tableData.status = Status.occupied;
       } else {
@@ -126,6 +156,7 @@ class OrderProvider extends ChangeNotifier {
           type: OrderType.counter,
           isVeg: showVegOnly,
           items: List.from(selectedItems),
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
       } else {
         orders.remove(0);
@@ -139,38 +170,60 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ UPDATED: Use Order.getTotal() method
   double getTableTotal(int tableNumber) {
     final order = orders[tableNumber];
     if (order == null || order.items.isEmpty) {
       return 0.0;
     }
-    return order.items.fold(0.0, (sum, item) => sum + item.price);
+    return order.getTotal();  // ✅ Uses quantities
   }
 
   // FIXED: Remove item with proper state cleanup
   void removeItem(MenuItem item, List<TableData> tables) {
-    // 1. Remove from the selected items
+    // 1. Remove from selected items
     selectedItems.remove(item);
 
     // 2. Remove from quantities map
     _itemQuantities.remove(item);
 
-    // 3. If it was the last item, clean up properly
-    if (selectedItems.isEmpty) {
-      if (selectedTable > 0) {
-        final tableData = tables.firstWhere((t) => t.number == selectedTable);
+    // 3. Update the orders map immediately
+    if (selectedTable > 0) {
+      final tableData = tables.firstWhere((t) => t.number == selectedTable);
+
+      if (selectedItems.isEmpty) {
+        // No items left - remove order and mark table as free
         orders.remove(selectedTable);
         tableData.status = Status.free;
       } else {
-        orders.remove(0); // Counter order
+        // Items still exist - update order with new list
+        orders[selectedTable] = Order(
+          type: OrderType.table,
+          items: List.from(selectedItems),
+          isVeg: showVegOnly,
+          table: tableData,
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
+        );
+        tableData.status = Status.occupied;
       }
-
-      // Reset state for empty order
-      selectedTable = 0;
-      showVegOnly = true;
+    } else if (selectedTable == 0) {
+      // Counter order
+      if (selectedItems.isEmpty) {
+        orders.remove(0);
+      } else {
+        orders[0] = Order(
+          type: OrderType.counter,
+          isVeg: showVegOnly,
+          items: List.from(selectedItems),
+          quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
+        );
+      }
     }
 
-    // Always notify listeners - this ensures UI updates
+    print("Item removed: ${item.name}");
+    print("Remaining items: ${selectedItems.length}");
+    print("Orders: $orders");
+
     notifyListeners();
   }
 
