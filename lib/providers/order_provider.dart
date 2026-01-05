@@ -13,6 +13,7 @@ class OrderProvider extends ChangeNotifier {
 
   // A separate map just to track quantities
   final Map<MenuItem, int> _itemQuantities = {};
+  Map<MenuItem, int> get quantities => _itemQuantities;
 
   // Getter for the UI to display the total
   double get totalOrderAmount {
@@ -242,11 +243,10 @@ class OrderProvider extends ChangeNotifier {
     } else {
       orders.remove(0);
     }
-
     selectedItems = [];
     _itemQuantities.clear();
     selectedTable = 0;
-    showVegOnly = false;
+    showVegOnly = true;
     notifyListeners();
   }
 

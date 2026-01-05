@@ -12,7 +12,9 @@ import '../components/tooglebtn.dart';
 import '../models/menu_category.dart';
 import '../models/menu_item.dart';
 import '../models/table.dart';
+import '../providers/inventory_provider.dart';
 import '../providers/order_provider.dart';
+import '../services/firestore_service.dart';
 import 'loginpage.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -24,121 +26,89 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late List<MenuCategory> categories;
+  late List<MenuCategory> categories = [];
+  late List<TableData> tables = [];
   MenuCategory? selectedCategory;
-  late List<TableData> tables;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    categories = [
-      MenuCategory(
-        name: "Pizza",
-        icon: Icons.local_pizza,
-        items: [
-          MenuItem(
-            name: "Margherita",
-            price: 180,
-            imagePlaceholder: "Margherita.png",
-            isVeg: true,
-          ),
-          MenuItem(
-            name: "Pepperoni Feast",
-            price: 350,
-            imagePlaceholder: "Pepperoni_Feast.png",
-            isVeg: false,
-          ),
-          MenuItem(
-            name: "Veggie Supreme",
-            price: 280,
-            imagePlaceholder: "Veggie_Supreme.png",
-            isVeg: true,
-          ),
-        ],
-      ),
-      MenuCategory(
-        name: "Burgers",
-        icon: Icons.lunch_dining,
-        items: [
-          MenuItem(
-            name: "Classic Aloo Tikki",
-            price: 120,
-            imagePlaceholder: "Classic_Aloo_Tikki.png",
-            isVeg: true,
-          ),
-          MenuItem(
-            name: "Crispy Chicken Burger",
-            price: 220,
-            imagePlaceholder: "Crispy_Chicken_Burger.png",
-            isVeg: false,
-          ),
-          MenuItem(
-            name: "Double Cheese Smash",
-            price: 290,
-            imagePlaceholder: "Double_Cheese_Smash.png",
-            isVeg: true,
-          ),
-        ],
-      ),
-      MenuCategory(
-        name: "Sides",
-        icon: Icons.fastfood,
-        items: [
-          MenuItem(
-            name: "Peri Peri Fries",
-            price: 110,
-            imagePlaceholder: "Peri_Peri_Fries.png",
-            isVeg: true,
-          ),
-          MenuItem(
-            name: "Chicken Wings (6pcs)",
-            price: 240,
-            imagePlaceholder: "Chicken_Wings.png",
-            isVeg: false,
-          ),
-          MenuItem(
-            name: "Garlic Breadsticks",
-            price: 140,
-            imagePlaceholder: "Garlic_Breadsticks.png",
-            isVeg: true,
-          ),
-        ],
-      ),
-      MenuCategory(
-        name: "Beverages",
-        icon: Icons.local_drink,
-        items: [
-          MenuItem(
-            name: "Cold Coffee",
-            price: 150,
-            imagePlaceholder: "Cold_Coffee.png",
-            isVeg: true,
-          ),
-          MenuItem(
-            name: "Fresh Lime Soda",
-            price: 80,
-            imagePlaceholder: "Fresh_Lime_Soda.png",
-            isVeg: true,
-          ),
-        ],
-      ),
-    ];
+    _loadDataFromFirestore();
+  }
 
-    tables = [
-      TableData(number: 1, status: Status.free),
-      TableData(number: 2, status: Status.free),
-      TableData(number: 3, status: Status.free),
-      TableData(number: 4, status: Status.free),
-      TableData(number: 5, status: Status.free),
-    ];
+  Future<void> _loadDataFromFirestore() async {
+    try {
+      print("🔄 Loading data from Firestore...");
 
-    selectedCategory = categories.first;
+      // Fetch tables from Firestore
+      final fetchedTables = await FirestoreService.fetchTables();
+
+      // Fetch menu categories from Firestore
+      final fetchedCategories = await FirestoreService.fetchMenuCategories();
+
+      if (mounted) {
+        setState(() {
+          tables = fetchedTables;
+          categories = fetchedCategories;
+          selectedCategory = categories.isNotEmpty ? categories.first : null;
+          isLoading = false;
+        });
+      }
+      print("✅ All data loaded successfully!");
+    } catch (e) {
+      print("❌ Error loading data: $e");
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final allItems = selectedCategory?.items ?? [];
-    final ColorScheme colors = Theme.of(context).colorScheme;
+    // Show loading indicator while fetching data
+    if (isLoading) {
+      return Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: AppBar(
+            title: const Text("PopNFry"),
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Show error if no data
+    if (categories.isEmpty || tables.isEmpty) {
+      return Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: AppBar(
+            title: const Text("PopNFry"),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("⚠️ No data found in Firestore"),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _loadDataFromFirestore,
+                child: const Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final allItems = selectedCategory?.items ?? []; final ColorScheme colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       // Fixed: Removed tiny PreferredSize that was hiding content
@@ -150,11 +120,16 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: [
             IconButton(
               onPressed: (){
-                // await FirebaseAuth.instance.signOut();
                 if (context.mounted) {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const InventoryPage()),
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ChangeNotifierProvider(
+                            create: (_) => InventoryProvider(),
+                            child: const InventoryPage(),
+                          ),
+                    ),
                   );
                 }
               },
@@ -203,7 +178,6 @@ class _MyHomePageState extends State<MyHomePage> {
                           .where((item) => item.isVeg)
                           .toList();
                     }
-
                     // Apply search filter
                     if (orderProvider.searchQuery.isNotEmpty) {
                       filteredItems = filteredItems.where((item) =>
