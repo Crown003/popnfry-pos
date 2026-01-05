@@ -24,8 +24,17 @@ class OrderSummaryPanel extends StatefulWidget {
 class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
   @override
   Widget build(BuildContext context) {
-    // Access the provider
     final orderProvider = context.watch<OrderProvider>();
+    // Access the provider
+    final Status? tableStatus;
+    if (orderProvider.selectedTable > 0) {
+      tableStatus = widget.tables
+        .firstWhere((t) => t.number == orderProvider.selectedTable)
+        .status;
+    } else {
+      tableStatus = null;
+    }
+    final bool isAlreadyBilled = tableStatus == Status.billed;
     final selectedItems = orderProvider.selectedItems;
 
     return Container(
@@ -190,11 +199,15 @@ class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
               ),
               onPressed: selectedItems.isEmpty
                   ? null
-                  : () {
-                      // Professional Logging using Provider data
-                      print("===========PopNFry=============");
-                      print("====Printing the bill++++");
-                    },
+                  : (){
+                orderProvider.onBillPrint(widget.tables);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🖨️ Bill Printed - Table marked as Billed'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
               child: const Text(
                 "Print Bill",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

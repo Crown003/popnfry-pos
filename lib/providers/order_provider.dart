@@ -79,7 +79,7 @@ class OrderProvider extends ChangeNotifier {
           table: tableData,
           quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
-        tableData.status = Status.occupied;
+        tableData.status = tableData.status != Status.billed ? Status.occupied : Status.billed ;
       } else {
         orders.remove(selectedTable);
         tableData.status = Status.free;
@@ -121,7 +121,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (selectedTable > 0 && selectedItems.isNotEmpty) {
         final tableData = tables.firstWhere((t) => t.number == selectedTable);
-        tableData.status = Status.occupied;
+        tableData.status = tableData.status != Status.billed ? Status.occupied : Status.billed ;
       }
     } else {
       selectedItems = [];
@@ -145,7 +145,9 @@ class OrderProvider extends ChangeNotifier {
           table: tableData,
           quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
+        if(tableData.status != Status.billed){
         tableData.status = Status.occupied;
+        }
       } else {
         orders.remove(selectedTable);
         tableData.status = Status.free;
@@ -171,13 +173,12 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ UPDATED: Use Order.getTotal() method
   double getTableTotal(int tableNumber) {
     final order = orders[tableNumber];
     if (order == null || order.items.isEmpty) {
       return 0.0;
     }
-    return order.getTotal();  // ✅ Uses quantities
+    return order.getTotal();
   }
 
   // FIXED: Remove item with proper state cleanup
@@ -220,7 +221,6 @@ class OrderProvider extends ChangeNotifier {
         );
       }
     }
-
     print("Item removed: ${item.name}");
     print("Remaining items: ${selectedItems.length}");
     print("Orders: $orders");
@@ -259,4 +259,36 @@ class OrderProvider extends ChangeNotifier {
     searchQuery = '';
     notifyListeners();
   }
+
+  void onBillPrint(List<TableData> tables) {
+    if (selectedTable <= 0) return; // No billing for counter here
+    if (!orders.containsKey(selectedTable)) return;
+
+    final order = orders[selectedTable]!;
+
+    // 🧾 Prepare printable data
+    final billData = {
+      'items': order.items.map((item) {
+        return {
+          'name': item.name,
+          'price': item.price,
+          'quantity': order.getQuantity(item),
+        };
+      }).toList(),
+      'total': order.getTotal(),
+    };
+
+    print("🧾 Printing bill for Table $selectedTable");
+
+    // 🔹 Call printer later
+    // PrintService.printBill(...)
+
+    final tableData = tables.firstWhere((t) => t.number == selectedTable);
+    tableData.status = Status.billed;
+
+    notifyListeners();
+  }
+
+
+
 }

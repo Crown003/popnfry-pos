@@ -1,6 +1,8 @@
 // import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 
+import "../models/table.dart";
+
 class Helper {
   static CustomTextField(
     TextEditingController controller,
@@ -59,68 +61,95 @@ class Helper {
   }
 
   static Widget CustomTableCard({
-    required bool isOccupied,
+    required Status status,
     required VoidCallback onSelect,
     required VoidCallback onDeselect,
     required String text,
     required bool isSelected,
     required String tableTotal,
   }) {
+    Color bgColor;
+    Color borderColor;
+
+    if (isSelected) {
+      bgColor = Colors.green.shade100;
+      borderColor = Colors.green;
+    } else {
+      switch (status) {
+        case Status.free:
+          bgColor = Colors.white;
+          borderColor = Colors.grey.shade300;
+          break;
+        case Status.occupied:
+          bgColor = Colors.yellow.shade100;
+          borderColor = Colors.orange;
+          break;
+        case Status.billed:
+          bgColor = Colors.blue.shade100;
+          borderColor = Colors.blue;
+          break;
+      }
+    }
+
     return InkWell(
       onTap: () {
         if (isSelected) {
-          onDeselect();  // Deselect if already selected
+          onDeselect();
         } else {
-          onSelect();    // Select if not selected
+          onSelect();
         }
       },
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.green.shade100
-              : isOccupied
-              ? Colors.yellow.shade100
-              : Colors.white,
+          color: bgColor,
           border: Border.all(
-            color: isSelected ? Colors.green : Colors.grey.shade300,
+            color: borderColor,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: Colors.green.shade50,
-              blurRadius: 4,
-              offset: const Offset(0, 4),
-            ),
-          ] : [],
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
+              /// Table name
               Text(
                 text,
-                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
-                  color: isSelected ? Colors.green : Colors.black87,
-                ),
-              ),Text(
-                tableTotal,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 10,
-                  color: isSelected ? Colors.green : Colors.black87,
+                  color: borderColor,
                 ),
               ),
 
+              /// Total amount
+              if (tableTotal.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    tableTotal,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: borderColor,
+                    ),
+                  ),
+                ),
+
+              /// ✅ BILLED ICON (only when billed)
+              if (status == Status.billed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Icon(
+                    Icons.receipt_long,
+                    size: 16,
+                    color: Colors.blue,
+                  ),
+                ),
             ],
           ),
-
         ),
       ),
     );

@@ -250,10 +250,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         final tableData = tables[index];
                         return Consumer<OrderProvider>(
                           builder: (context, orderProvider, child) {
-                            // Get the total for this specific table
                             final double tableTotal = orderProvider.getTableTotal(tableData.number);
-
                             return Helper.CustomTableCard(
+                              status: tableData.status,
                               onSelect: () {
                                 orderProvider.selectTable(tableData.number, tables);
                               },
@@ -261,10 +260,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 orderProvider.deselectTable(tableData.number, tables);
                               },
                               text: "Table ${tableData.number}",
-                              // Add a subtitle or extra text to show the price if occupied
                               tableTotal: tableTotal > 0 ? "₹${tableTotal.toInt()}" : "",
                               isSelected: orderProvider.selectedTable == tableData.number,
-                              isOccupied: tableData.status == Status.occupied,
                             );
                           },
                         );

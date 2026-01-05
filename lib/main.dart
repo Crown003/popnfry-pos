@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:possystem/pages/crud.dart';
 import 'package:possystem/providers/user_provider.dart';
 import 'package:possystem/utils/checkuser.dart';
 import 'package:provider/provider.dart';
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const CheckUser(),
+        // home:const MenuCategoryScreen(),
       ),
     );
   }
