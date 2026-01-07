@@ -43,7 +43,7 @@ class MenuItemCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: AspectRatio(
-                    aspectRatio: 1,
+                    aspectRatio: 1.2,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
@@ -54,6 +54,7 @@ class MenuItemCard extends StatelessWidget {
                           fit: BoxFit.contain,
                           width: double.infinity,
                           height: double.infinity,
+                          cacheWidth: 250,
                           errorBuilder: (context, error, stackTrace) {
                             return Image.asset(
                               alignment: Alignment.center,

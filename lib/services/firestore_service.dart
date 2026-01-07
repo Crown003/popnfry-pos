@@ -154,25 +154,38 @@ class FirestoreService {
     required List<MenuItem> items,
     required Map<MenuItem, int> quantities,
     required bool isVeg,
-    String? discount,
+    double discountAmount = 0.0,
+    double discountPercentage = 0.0,
     String? discountReason,
   }) async {
     try {
       final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
 
-      double total = 0.0;
+      double subtotal = 0.0;
       for (var item in items) {
-        total += item.price * (quantities[item] ?? 1);
+        subtotal += item.price * (quantities[item] ?? 1);
       }
+
+      // Calculate final discount
+      double finalDiscount = 0.0;
+      if (discountPercentage > 0) {
+        finalDiscount = (subtotal * discountPercentage / 100).clamp(0, subtotal);
+      } else if (discountAmount > 0) {
+        finalDiscount = discountAmount.clamp(0, subtotal);
+      }
+
+      double totalAmount = (subtotal - finalDiscount).clamp(0, double.infinity);
 
       await _firestore.collection('orders').doc(orderId).set({
         'tableNumber': tableNumber,
         'orderType': tableNumber > 0 ? 'table' : 'counter',
         'isVeg': isVeg,
-        'totalAmount': total,
-        // 'status': 'active',
-        'discount':discount,
-        'discountReason':discountReason,
+        'subtotal': subtotal,
+        'discountAmount': finalDiscount,
+        'discountPercentage': discountPercentage,
+        'discountReason': discountReason,
+        'totalAmount': totalAmount,
+        'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
         'items': items.map((item) {
           return {
@@ -186,6 +199,12 @@ class FirestoreService {
       });
 
       print("✅ Order saved: $orderId");
+      print("   Subtotal: ₹${subtotal.toInt()}");
+      print("   Discount: ₹${finalDiscount.toInt()}");
+      print("   Total: ₹${totalAmount.toInt()}");
+      if (discountReason != null) {
+        print("   Reason: $discountReason");
+      }
     } catch (e) {
       print("❌ Error saving order: $e");
     }

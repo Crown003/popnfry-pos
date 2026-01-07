@@ -1,4 +1,3 @@
-// import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 
 import "../models/table.dart";
@@ -74,7 +73,8 @@ class Helper {
     if (isSelected) {
       bgColor = Colors.green.shade100;
       borderColor = Colors.green;
-    } else {
+    }
+    else {
       switch (status) {
         case Status.free:
           bgColor = Colors.white;
@@ -132,13 +132,13 @@ class Helper {
                   child: Text(
                     tableTotal,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
                       color: borderColor,
                     ),
                   ),
                 ),
 
-              /// ✅ BILLED ICON (only when billed)
               if (status == Status.billed)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),

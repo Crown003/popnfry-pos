@@ -222,7 +222,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
           // 2. Middle: Tables Grid
           Expanded(
-            flex: 5,
+            flex: 4,
             child: Container(
               color: Colors.grey[50],
               padding: const EdgeInsets.all(16),
