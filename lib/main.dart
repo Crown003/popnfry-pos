@@ -4,9 +4,6 @@ import 'package:possystem/pages/crud.dart';
 import 'package:possystem/providers/user_provider.dart';
 import 'package:possystem/utils/checkuser.dart';
 import 'package:provider/provider.dart';
-import 'package:possystem/pages/homepage.dart';
-import 'package:possystem/pages/loginpage.dart';
-import 'package:possystem/pages/test.dart';
 import 'package:possystem/providers/order_provider.dart';
 import 'firebase_options.dart';
 
@@ -35,7 +32,7 @@ class MyApp extends StatelessWidget {
             tertiaryContainer: Color.fromRGBO(128, 128, 128, 0.1),
           ),
           appBarTheme: AppBarTheme(
-            toolbarHeight: 80, // Sets the height for all AppBars in the app
+            toolbarHeight: 80,
             backgroundColor: Colors.redAccent,
             centerTitle: true,
             foregroundColor: Colors.white,

@@ -76,7 +76,7 @@ class FirestoreService {
                   imagePlaceholder:imagePlaceholder,
                   isVeg: isVeg,
                   haveVariants: haveVariants,
-                  variants: variants, // ✅ null if haveVariants == false
+                  variants: variants,
                 ),
               );
             } catch (e) {
@@ -267,6 +267,38 @@ class FirestoreService {
       print("✅ Item deleted: $itemId");
     } catch (e) {
       print("❌ Error deleting inventory item: $e");
+      rethrow;
+    }
+  }
+
+  // ============ MENU CATEGORY MANAGEMENT ============
+
+  static Stream<QuerySnapshot> getMenuCategoriesStream() {
+    return _firestore.collection('menu_categories').snapshots();
+  }
+
+  static Future<void> createMenuCategory(String categoryName) async {
+    try {
+      print("📝 Creating menu category: $categoryName");
+      await _firestore.collection('menu_categories').add({
+        'name': categoryName,
+        'icon': 'restaurant',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print("✅ Category created: $categoryName");
+    } catch (e) {
+      print("❌ Error creating category: $e");
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteMenuCategory(String categoryId) async {
+    try {
+      print("🗑️  Deleting menu category: $categoryId");
+      await _firestore.collection('menu_categories').doc(categoryId).delete();
+      print("✅ Category deleted: $categoryId");
+    } catch (e) {
+      print("❌ Error deleting category: $e");
       rethrow;
     }
   }
