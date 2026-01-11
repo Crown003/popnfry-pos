@@ -61,24 +61,33 @@ class FirestoreService {
               double price = (itemDoc['price'] as num?)?.toDouble() ?? 0.0;
               String imagePlaceholder = itemDoc['imagePlaceholder'] as String? ?? '';
               bool isVeg = itemDoc['isVeg'] as bool? ?? false;
+              bool haveVariants = itemDoc['haveVarients']?? false;
 
-              items.add(MenuItem(
-                name: itemName,
-                price: price,
-                imagePlaceholder: imagePlaceholder,
-                isVeg: isVeg,
-              ));
+              List<Variant>? variants = haveVariants
+                  ? (itemDoc['varients'] as List?)
+                  ?.map((v) => Variant.fromMap(v as Map<String, dynamic>))
+                  .toList()
+                  : null;
+
+              items.add(
+                MenuItem(
+                  name: itemName ?? 'Unknown',
+                  price: price,
+                  imagePlaceholder:imagePlaceholder,
+                  isVeg: isVeg,
+                  haveVariants: haveVariants,
+                  variants: variants, // ✅ null if haveVariants == false
+                ),
+              );
             } catch (e) {
               print("Error parsing item: $e");
             }
           }
-
           categories.add(MenuCategory(
             name: categoryName,
             icon: _getIconFromString(iconName),
             items: items,
           ));
-
           print("  ✓ $categoryName (${items.length} items)");
         } catch (e) {
           print("Error parsing category: $e");

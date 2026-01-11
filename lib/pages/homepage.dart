@@ -9,12 +9,14 @@ import '../components/filter_and_search_row.dart';
 import '../components/menu_items_grid.dart';
 import '../components/order_summary_panel.dart';
 import '../components/tooglebtn.dart';
+import '../components/variant_popup.dart';
 import '../models/menu_category.dart';
 import '../models/menu_item.dart';
 import '../models/table.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/order_provider.dart';
 import '../services/firestore_service.dart';
+import '../utils/match.dart';
 import 'loginpage.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -73,13 +75,9 @@ class _MyHomePageState extends State<MyHomePage> {
       return Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: AppBar(
-            title: const Text("PopNFry"),
-          ),
+          child: AppBar(title: const Text("PopNFry")),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -88,9 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
       return Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: AppBar(
-            title: const Text("PopNFry"),
-          ),
+          child: AppBar(title: const Text("PopNFry")),
         ),
         body: Center(
           child: Column(
@@ -108,7 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
 
-    final allItems = selectedCategory?.items ?? []; final ColorScheme colors = Theme.of(context).colorScheme;
+    final allItems = selectedCategory?.items ?? [];
+    final ColorScheme colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       // Fixed: Removed tiny PreferredSize that was hiding content
@@ -119,16 +116,15 @@ class _MyHomePageState extends State<MyHomePage> {
           title: const Text(""),
           actions: [
             IconButton(
-              onPressed: (){
+              onPressed: () {
                 if (context.mounted) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ChangeNotifierProvider(
-                            create: (_) => InventoryProvider(),
-                            child: const InventoryPage(),
-                          ),
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => InventoryProvider(),
+                        child: const InventoryPage(),
+                      ),
                     ),
                   );
                 }
@@ -180,11 +176,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     }
                     // Apply search filter
                     if (orderProvider.searchQuery.isNotEmpty) {
-                      filteredItems = filteredItems.where((item) =>
-                          item.name.toLowerCase().contains(
-                              orderProvider.searchQuery.toLowerCase())).toList();
+                      filteredItems = filteredItems
+                          .where(
+                            (item) => matchesSearch(
+                              item.name,
+                              orderProvider.searchQuery,
+                            ),
+                          )
+                          .toList();
                     }
-
                     return Expanded(
                       child: Column(
                         children: [
@@ -203,10 +203,20 @@ class _MyHomePageState extends State<MyHomePage> {
                               items: filteredItems,
                               selectedItems: orderProvider.selectedItems,
                               onItemToggled: (item) {
-                                if (orderProvider.selectedItems.contains(item)) {
-                                  orderProvider.removeItem(item,tables);
+                                if (orderProvider.selectedItems.contains(
+                                  item,
+                                )) {
+                                  orderProvider.removeItem(item, tables);
                                 } else {
-                                  orderProvider.addItem(item);
+                                  if (item.haveVariants) {
+                                    VariantPopup.showVariantPopup(
+                                      context,
+                                      item,
+                                      orderProvider,
+                                    );
+                                  } else {
+                                    orderProvider.addItem(item);
+                                  }
                                 }
                               },
                             ),
@@ -230,38 +240,48 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Text(
                     "TABLES",
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Expanded(
                     child: GridView.builder(
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.2,
-                      ),
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.2,
+                          ),
                       itemCount: tables.length,
                       itemBuilder: (context, index) {
                         final tableData = tables[index];
                         return Consumer<OrderProvider>(
                           builder: (context, orderProvider, child) {
-                            final double tableTotal = orderProvider.getTableTotal(tableData.number);
+                            final double tableTotal = orderProvider
+                                .getTableTotal(tableData.number);
                             return Helper.CustomTableCard(
                               status: tableData.status,
                               onSelect: () {
-                                orderProvider.selectTable(tableData.number, tables);
+                                orderProvider.selectTable(
+                                  tableData.number,
+                                  tables,
+                                );
                               },
                               onDeselect: () {
-                                orderProvider.deselectTable(tableData.number, tables);
+                                orderProvider.deselectTable(
+                                  tableData.number,
+                                  tables,
+                                );
                               },
                               text: "Table ${tableData.number}",
-                              tableTotal: tableTotal > 0 ? "₹${tableTotal.toInt()}" : "",
-                              isSelected: orderProvider.selectedTable == tableData.number,
+                              tableTotal: tableTotal > 0
+                                  ? "₹${tableTotal.toInt()}"
+                                  : "",
+                              isSelected:
+                                  orderProvider.selectedTable ==
+                                  tableData.number,
                             );
                           },
                         );

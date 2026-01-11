@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/table.dart';
 import '../providers/order_provider.dart';
 import '../services/firestore_service.dart';
+import 'discount_popup.dart';
 import 'selected_item_tile.dart';
 
 class OrderSummaryPanel extends StatefulWidget {
@@ -168,7 +169,7 @@ class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
               width: double.infinity,
               height: 40,
               child: ElevatedButton.icon(
-                onPressed: () => _showDiscountDialog(context, orderProvider),
+                onPressed: () => DiscountDialog.show(context, orderProvider),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                   foregroundColor: Colors.white,
@@ -303,193 +304,5 @@ class _OrderSummaryPanelState extends State<OrderSummaryPanel> {
   }
 
   // ============ DISCOUNT DIALOG METHOD (NEW) ============
-  void _showDiscountDialog(BuildContext context, OrderProvider orderProvider) {
-    final subtotal = orderProvider.getSubtotal();
-    bool usePercentage = orderProvider.usePercentageDiscount;
-    final valueCtrl = TextEditingController(
-      text: usePercentage
-          ? orderProvider.discountPercentage.toString()
-          : orderProvider.discountAmount.toString(),
-    );
-    final reasonCtrl = TextEditingController(text: orderProvider.discountReason ?? '');
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    '💰 Apply Discount',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Subtotal:', style: TextStyle(fontWeight: FontWeight.w500)),
-                        Text(
-                          '₹${subtotal.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => usePercentage = true),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: usePercentage ? Colors.green : Colors.grey[300]!,
-                                width: usePercentage ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              color: usePercentage ? Colors.green[50] : Colors.transparent,
-                            ),
-                            child: const Center(
-                              child: Text('Percentage %', style: TextStyle(fontWeight: FontWeight.w500)),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => usePercentage = false),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: !usePercentage ? Colors.green : Colors.grey[300]!,
-                                width: !usePercentage ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                              color: !usePercentage ? Colors.green[50] : Colors.transparent,
-                            ),
-                            child: const Center(
-                              child: Text('Fixed Amount ₹', style: TextStyle(fontWeight: FontWeight.w500)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: valueCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: usePercentage ? 'Discount %' : 'Discount Amount ₹',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      prefixIcon: Icon(usePercentage ? Icons.percent : Icons.currency_rupee),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: reasonCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Reason (Optional)',
-                      hintText: 'e.g., Loyalty, Promotion',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      prefixIcon: const Icon(Icons.note),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue[200]!),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Discount:'),
-                            Text(
-                              '₹${(usePercentage ? (subtotal * (double.tryParse(valueCtrl.text) ?? 0) / 100).clamp(0, subtotal) : (double.tryParse(valueCtrl.text) ?? 0).clamp(0, subtotal)).toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total:', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text(
-                              '₹${(subtotal - (usePercentage ? (subtotal * (double.tryParse(valueCtrl.text) ?? 0) / 100).clamp(0, subtotal) : (double.tryParse(valueCtrl.text) ?? 0).clamp(0, subtotal))).toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            orderProvider.clearDiscount();
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Clear'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final value = double.tryParse(valueCtrl.text) ?? 0;
-                            final reason = reasonCtrl.text.trim().isEmpty ? null : reasonCtrl.text.trim();
-
-                            if (usePercentage) {
-                              orderProvider.setPercentageDiscount(value, reason: reason);
-                            } else {
-                              orderProvider.setFixedDiscount(value, reason: reason);
-                            }
-
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          child: const Text(
-                            'Apply',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

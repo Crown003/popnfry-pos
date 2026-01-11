@@ -86,14 +86,14 @@ class MenuItemCard extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 // Price
-                Text(
-                  "₹${item.price.toInt()}",
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                // Text(
+                //   "₹${item.price.toInt()}",
+                //   style: const TextStyle(
+                //     color: Colors.green,
+                //     fontSize: 12,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
               ],
             ),
 
