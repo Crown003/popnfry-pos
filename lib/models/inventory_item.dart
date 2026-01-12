@@ -7,7 +7,7 @@ class InventoryItem {
   final int lowStockThreshold;
   final double purchasePrice;
   final double sellingPrice;
-  final DateTime? lastUpdated; // Optional
+  final DateTime? lastUpdated;
 
   InventoryItem({
     required this.id,
