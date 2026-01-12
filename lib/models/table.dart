@@ -1,6 +1,7 @@
 enum Status {
   occupied,
   free,
+  billed,
 }
 class TableData {
   final int number;

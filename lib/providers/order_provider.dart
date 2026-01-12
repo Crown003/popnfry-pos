@@ -10,6 +10,52 @@ class OrderProvider extends ChangeNotifier {
   List<MenuItem> selectedItems = [];
   bool showVegOnly = true;
   String searchQuery = '';
+  double discountAmount = 0.0;
+  double discountPercentage = 0.0;
+  String? discountReason;
+  bool usePercentageDiscount = true;
+
+  // ============ DISCOUNT GETTERS (NEW) ============
+  double getSubtotal() {
+    return totalOrderAmount;
+  }
+
+  double getDiscountValue() {
+    if (usePercentageDiscount && discountPercentage > 0) {
+      final subtotal = getSubtotal();
+      return (subtotal * discountPercentage / 100).clamp(0, subtotal);
+    } else if (!usePercentageDiscount && discountAmount > 0) {
+      return discountAmount.clamp(0, getSubtotal());
+    }
+    return 0.0;
+  }
+
+  double getFinalTotal() {
+    return (getSubtotal() - getDiscountValue()).clamp(0, double.infinity);
+  }
+
+  // ============ DISCOUNT METHODS (NEW) ============
+  void setPercentageDiscount(double percentage, {String? reason}) {
+    usePercentageDiscount = true;
+    discountPercentage = percentage.clamp(0, 100);
+    discountReason = reason;
+    notifyListeners();
+  }
+
+  void setFixedDiscount(double amount, {String? reason}) {
+    usePercentageDiscount = false;
+    discountAmount = amount.clamp(0, getSubtotal());
+    discountReason = reason;
+    notifyListeners();
+  }
+
+  void clearDiscount() {
+    discountAmount = 0.0;
+    discountPercentage = 0.0;
+    discountReason = null;
+    usePercentageDiscount = true;
+    notifyListeners();
+  }
 
   // A separate map just to track quantities
   final Map<MenuItem, int> _itemQuantities = {};
@@ -79,7 +125,7 @@ class OrderProvider extends ChangeNotifier {
           table: tableData,
           quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
-        tableData.status = Status.occupied;
+        tableData.status = tableData.status != Status.billed ? Status.occupied : Status.billed ;
       } else {
         orders.remove(selectedTable);
         tableData.status = Status.free;
@@ -121,7 +167,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (selectedTable > 0 && selectedItems.isNotEmpty) {
         final tableData = tables.firstWhere((t) => t.number == selectedTable);
-        tableData.status = Status.occupied;
+        tableData.status = tableData.status != Status.billed ? Status.occupied : Status.billed ;
       }
     } else {
       selectedItems = [];
@@ -145,7 +191,9 @@ class OrderProvider extends ChangeNotifier {
           table: tableData,
           quantities: Map.from(_itemQuantities),  // ✅ Pass quantities
         );
+        if(tableData.status != Status.billed){
         tableData.status = Status.occupied;
+        }
       } else {
         orders.remove(selectedTable);
         tableData.status = Status.free;
@@ -171,13 +219,19 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ UPDATED: Use Order.getTotal() method
   double getTableTotal(int tableNumber) {
     final order = orders[tableNumber];
     if (order == null || order.items.isEmpty) {
       return 0.0;
     }
-    return order.getTotal();  // ✅ Uses quantities
+
+    // If this is the currently selected table, apply discount
+    if (selectedTable == tableNumber) {
+      return getFinalTotal(); // Returns subtotal - discount
+    }
+
+    // For other tables, return their order total without discount
+    return order.getTotal();
   }
 
   // FIXED: Remove item with proper state cleanup
@@ -220,7 +274,6 @@ class OrderProvider extends ChangeNotifier {
         );
       }
     }
-
     print("Item removed: ${item.name}");
     print("Remaining items: ${selectedItems.length}");
     print("Orders: $orders");
@@ -257,6 +310,55 @@ class OrderProvider extends ChangeNotifier {
 
   void clearSearch() {
     searchQuery = '';
+    notifyListeners();
+  }
+
+  void onBillPrint(List<TableData> tables) {
+    if (selectedTable <= 0) return; // No billing for counter here
+    if (!orders.containsKey(selectedTable)) return;
+
+    final order = orders[selectedTable]!;
+
+    // Calculate subtotal
+    double subtotal = 0.0;
+    for (var item in order.items) {
+      subtotal += item.price * order.getQuantity(item);
+    }
+    // Calculate discount
+    double discountValue = getDiscountValue();
+
+    // 🧾 Prepare printable data with discount
+    final billData = {
+      'items': order.items.map((item) {
+        return {
+          'name': item.name,
+          'price': item.price,
+          'quantity': order.getQuantity(item),
+        };
+      }).toList(),
+      'subtotal': subtotal,
+      'discountAmount': discountValue,
+      'discountPercentage': discountPercentage,
+      'discountReason': discountReason,
+      'finalTotal': getFinalTotal(),
+    };
+
+    print("🧾 Printing bill for Table $selectedTable");
+    print("   Items: ${order.items.length}");
+    print("   Subtotal: ₹${subtotal.toInt()}");
+    if (discountValue > 0) {
+      print("   Discount: ₹${discountValue.toInt()} ${usePercentageDiscount ? '(${discountPercentage.toStringAsFixed(1)}%)' : '(Fixed)'}");
+      if (discountReason != null) {
+        print("   Reason: $discountReason");
+      }
+    }
+    print("   Total: ₹${getFinalTotal().toInt()}");
+
+    // 🔹 Call printer later
+    // PrintService.printBill(billData)
+
+    final tableData = tables.firstWhere((t) => t.number == selectedTable);
+    tableData.status = Status.billed;
     notifyListeners();
   }
 }

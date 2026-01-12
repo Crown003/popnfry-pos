@@ -61,24 +61,33 @@ class FirestoreService {
               double price = (itemDoc['price'] as num?)?.toDouble() ?? 0.0;
               String imagePlaceholder = itemDoc['imagePlaceholder'] as String? ?? '';
               bool isVeg = itemDoc['isVeg'] as bool? ?? false;
+              bool haveVariants = itemDoc['haveVarients']?? false;
 
-              items.add(MenuItem(
-                name: itemName,
-                price: price,
-                imagePlaceholder: imagePlaceholder,
-                isVeg: isVeg,
-              ));
+              List<Variant>? variants = haveVariants
+                  ? (itemDoc['varients'] as List?)
+                  ?.map((v) => Variant.fromMap(v as Map<String, dynamic>))
+                  .toList()
+                  : null;
+
+              items.add(
+                MenuItem(
+                  name: itemName ?? 'Unknown',
+                  price: price,
+                  imagePlaceholder:imagePlaceholder,
+                  isVeg: isVeg,
+                  haveVariants: haveVariants,
+                  variants: variants,
+                ),
+              );
             } catch (e) {
               print("Error parsing item: $e");
             }
           }
-
           categories.add(MenuCategory(
             name: categoryName,
             icon: _getIconFromString(iconName),
             items: items,
           ));
-
           print("  ✓ $categoryName (${items.length} items)");
         } catch (e) {
           print("Error parsing category: $e");
@@ -154,25 +163,38 @@ class FirestoreService {
     required List<MenuItem> items,
     required Map<MenuItem, int> quantities,
     required bool isVeg,
-    String? discount,
+    double discountAmount = 0.0,
+    double discountPercentage = 0.0,
     String? discountReason,
   }) async {
     try {
       final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
 
-      double total = 0.0;
+      double subtotal = 0.0;
       for (var item in items) {
-        total += item.price * (quantities[item] ?? 1);
+        subtotal += item.price * (quantities[item] ?? 1);
       }
+
+      // Calculate final discount
+      double finalDiscount = 0.0;
+      if (discountPercentage > 0) {
+        finalDiscount = (subtotal * discountPercentage / 100).clamp(0, subtotal);
+      } else if (discountAmount > 0) {
+        finalDiscount = discountAmount.clamp(0, subtotal);
+      }
+
+      double totalAmount = (subtotal - finalDiscount).clamp(0, double.infinity);
 
       await _firestore.collection('orders').doc(orderId).set({
         'tableNumber': tableNumber,
         'orderType': tableNumber > 0 ? 'table' : 'counter',
         'isVeg': isVeg,
-        'totalAmount': total,
-        // 'status': 'active',
-        'discount':discount,
-        'discountReason':discountReason,
+        'subtotal': subtotal,
+        'discountAmount': finalDiscount,
+        'discountPercentage': discountPercentage,
+        'discountReason': discountReason,
+        'totalAmount': totalAmount,
+        'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
         'items': items.map((item) {
           return {
@@ -186,6 +208,12 @@ class FirestoreService {
       });
 
       print("✅ Order saved: $orderId");
+      print("   Subtotal: ₹${subtotal.toInt()}");
+      print("   Discount: ₹${finalDiscount.toInt()}");
+      print("   Total: ₹${totalAmount.toInt()}");
+      if (discountReason != null) {
+        print("   Reason: $discountReason");
+      }
     } catch (e) {
       print("❌ Error saving order: $e");
     }
@@ -239,6 +267,38 @@ class FirestoreService {
       print("✅ Item deleted: $itemId");
     } catch (e) {
       print("❌ Error deleting inventory item: $e");
+      rethrow;
+    }
+  }
+
+  // ============ MENU CATEGORY MANAGEMENT ============
+
+  static Stream<QuerySnapshot> getMenuCategoriesStream() {
+    return _firestore.collection('menu_categories').snapshots();
+  }
+
+  static Future<void> createMenuCategory(String categoryName) async {
+    try {
+      print("📝 Creating menu category: $categoryName");
+      await _firestore.collection('menu_categories').add({
+        'name': categoryName,
+        'icon': 'restaurant',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      print("✅ Category created: $categoryName");
+    } catch (e) {
+      print("❌ Error creating category: $e");
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteMenuCategory(String categoryId) async {
+    try {
+      print("🗑️  Deleting menu category: $categoryId");
+      await _firestore.collection('menu_categories').doc(categoryId).delete();
+      print("✅ Category deleted: $categoryId");
+    } catch (e) {
+      print("❌ Error deleting category: $e");
       rethrow;
     }
   }
