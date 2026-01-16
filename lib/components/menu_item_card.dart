@@ -13,6 +13,51 @@ class MenuItemCard extends StatelessWidget {
     required this.onTap,
   });
 
+  Widget _buildItemImage() {
+    final path = item.imagePlaceholder;
+
+    // Case 1: No path → fallback
+    if (path == null || path.trim().isEmpty) {
+      return _fallbackImage();
+    }
+    // Case 2: It's a network URL
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Image.network(
+        path,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        height: double.infinity,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => _fallbackImage(),
+      );
+    }
+
+    // Case 3: Assume it's a local asset name (without "assets/images/" prefix)
+    return Image.asset(
+      "assets/images/$path",
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      cacheWidth: 250,
+      errorBuilder: (context, error, stackTrace) => _fallbackImage(),
+    );
+  }
+
+  Widget _fallbackImage() {
+    return Image.asset(
+      'assets/images/logo.png',
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      cacheWidth: 250,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -27,11 +72,11 @@ class MenuItemCard extends StatelessWidget {
             color: isSelected ? Colors.green : Colors.grey.shade300,
             width: 2,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Colors.grey,
+              color: Colors.black12,
               blurRadius: 4,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -48,29 +93,12 @@ class MenuItemCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         color: Colors.grey[200],
-                        child: Image.asset(
-                          alignment: Alignment.center,
-                          "assets/images/${item.imagePlaceholder}",
-                          fit: BoxFit.contain,
-                          width: double.infinity,
-                          height: double.infinity,
-                          cacheWidth: 250,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              alignment: Alignment.center,
-                              cacheWidth: 250,
-                              'assets/images/logo.png',
-                              fit: BoxFit.contain,
-                            );
-                          },
-                        ),
+                        child: _buildItemImage(),
                       ),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   item.name,
                   style: const TextStyle(
@@ -82,22 +110,35 @@ class MenuItemCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-
                 const SizedBox(height: 6),
-
-                // Price
-                // Text(
-                //   "₹${item.price.toInt()}",
-                //   style: const TextStyle(
-                //     color: Colors.green,
-                //     fontSize: 12,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
               ],
             ),
 
-            // Check icon overlay
+            // Veg/Non-Veg indicator
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: item.isVeg ? Colors.green : Colors.red,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                padding: const EdgeInsets.all(2.5),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: item.isVeg ? Colors.green : Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+
+            // Selected checkmark
             if (isSelected)
               const Positioned(
                 top: 0,

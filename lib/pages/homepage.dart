@@ -17,6 +17,7 @@ import '../providers/inventory_provider.dart';
 import '../providers/order_provider.dart';
 import '../services/firestore_service.dart';
 import '../utils/match.dart';
+import 'crud.dart';
 import 'loginpage.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -131,6 +132,21 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               icon: const Icon(Icons.view_list_outlined),
               tooltip: "inventory",
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () {
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MenuCategoryScreen(),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.app_registration),
+              tooltip: "manage items",
             ),
             const SizedBox(width: 8),
             IconButton(

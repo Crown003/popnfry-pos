@@ -315,4 +315,69 @@ class FirestoreService {
     };
     return iconMap[iconName] ?? Icons.restaurant;
   }
+
+// ============ BULK INSERT MENU DATA ============
+  static Future<void> bulkInsertMenuData(Map<String, dynamic> menuData) async {
+    try {
+      print("🚀 Starting bulk insertion of menu data...");
+
+      final List<dynamic> categories = menuData['categories'] ?? [];
+
+      for (var category in categories) {
+        try {
+          print("\n📁 Processing category: ${category['name']}");
+
+          // Add category to Firestore
+          final categoryRef = await _firestore.collection('menu_categories').add({
+            'name': category['name'] as String,
+            'icon': category['icon'] as String? ?? 'restaurant',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          print("✅ Category created: ${categoryRef.id}");
+
+          // Add items to category
+          final List<dynamic> items = category['items'] ?? [];
+
+          for (var item in items) {
+            try {
+              final itemData = {
+                'name': item['name'] as String,
+                'price': (item['price'] as num).toDouble(),
+                'isVeg': item['isVeg'] as bool? ?? false,
+                'imagePlaceholder': item['imagePlaceholder'] as String? ?? '',
+                'haveVarients': item['haveVarients'] as bool? ?? false,
+                'varients': item['varients'] as List? ?? [],
+                'inventoryType': item['inventoryType'] as String? ?? 'recipe',
+                'createdAt': FieldValue.serverTimestamp(),
+              };
+
+              // Add inventory-specific fields
+              if (item['inventoryType'] == 'quantity') {
+                itemData['inventoryQuantity'] =
+                    (item['inventoryQuantity'] as num?)?.toDouble() ?? 0.0;
+                itemData['inventoryUnit'] =
+                    item['inventoryUnit'] as String? ?? 'kg';
+              } else if (item['inventoryType'] == 'recipe') {
+                itemData['recipe'] = item['recipe'] as List? ?? [];
+              }
+
+              await categoryRef.collection('items').add(itemData);
+              print("   ✅ Item added: ${item['name']}");
+            } catch (e) {
+              print("   ❌ Error adding item: $e");
+            }
+          }
+        } catch (e) {
+          print("❌ Error processing category: $e");
+        }
+      }
+
+      print("\n🎉 Bulk insertion completed successfully!");
+    } catch (e) {
+      print("❌ Error during bulk insertion: $e");
+      rethrow;
+    }
+  }
+
 }

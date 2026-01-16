@@ -40,10 +40,13 @@ class SelectedItemTile extends StatelessWidget {
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4,
+                      horizontal: 16,
+                    ),
                     child: Text(
                       item.name,
                       style: const TextStyle(
@@ -51,19 +54,25 @@ class SelectedItemTile extends StatelessWidget {
                         fontSize: 13,
                       ),
                       textAlign: TextAlign.center,
-                      maxLines: 2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-
-                  Text(
-                    "₹${item.price.toInt()}",
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                    ),
+                    child: Text(
+                      "₹${item.price.toInt()}",
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
+                    // mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
                         width: 30,
@@ -109,11 +118,7 @@ class SelectedItemTile extends StatelessWidget {
               child: IconButton(
                 alignment: Alignment.centerLeft,
                 padding: EdgeInsets.zero,
-                icon: const Icon(
-                  Icons.close,
-                  size: 14,
-                  color: Colors.red,
-                ),
+                icon: const Icon(Icons.close, size: 14, color: Colors.red),
                 onPressed: onRemove,
               ),
             ),
